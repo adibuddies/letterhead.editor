@@ -4,119 +4,273 @@
     <meta charset="UTF-8">
     <title>Letterhead Editor</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:wght@200;400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         :root {
             --gold: #c5a059;
             --obsidian: #0a0b0d;
-            --paper: #ffffff;
+            --glass: rgba(15, 17, 21, 0.95);
+            --text-dim: #9ea3ae;
+            --border-gold: rgba(197, 160, 89, 0.3);
         }
 
-        body { 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            background: #2b2b2b; /* dark bg for white paper */
-            font-family: 'Inter', sans-serif;
-        }
+        * { box-sizing: border-box; }
+        body { background: #1a1a1a; margin: 0; display: flex; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
 
-        #ui-panel {
-            width: 400px;
+        /* --- SIDEBAR (DIALOG BOX) --- */
+        #control-panel {
+            width: 360px;
+            height: 100vh;
             background: var(--obsidian);
-            color: white;
-            padding: 30px;
-            border-right: 2px solid var(--gold);
-            overflow-y: auto;
-        }
-
-        .page-viewport {
-            flex-grow: 1;
-            padding: 20px;
+            border-right: 1px solid var(--border-gold);
             display: flex;
-            justify-content: center;
-            overflow-y: auto;
+            flex-direction: column;
+            z-index: 1000;
+            color: white;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         }
 
-        .a4-sheet {
-            background: var(--paper);
-            width: 210mm; 
-            min-height: 297mm;
-            padding: 1in;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            position: relative;
-            color: black;
+        .sidebar-content { padding: 25px; flex-grow: 1; overflow-y: auto; }
+        .sidebar-header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-gold); padding-bottom: 20px; }
+        .miracle-logo { font-family: 'Palatino Linotype', serif; font-style: italic; font-weight: bold; color: var(--gold); font-size: 2.2rem; letter-spacing: 2px; margin: 0; }
+        .estd { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; }
+
+        .toolbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; border: 1px solid var(--border-gold); }
+        .toolbar button { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .toolbar button:hover { border-color: var(--gold); color: var(--gold); }
+
+        label { display: block; font-size: 0.65rem; margin-top: 15px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; }
+        input, textarea { width: 100%; margin-top: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-size: 12px; padding: 10px; border-radius: 6px; outline: none; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: var(--gold); }
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-gold); background: var(--obsidian); }
+        .gold-btn { width: 100%; background: var(--gold); color: var(--obsidian); border: none; padding: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; }
+        .copyright { font-size: 0.55rem; color: var(--text-dim); text-align: center; margin-top: 15px; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* --- PREVIEW AREA (A4 FIXED) --- */
+        .preview-area { flex-grow: 1; padding: 40px; display: flex; justify-content: center; overflow-y: auto; background: #2b2b2b; position: relative; }
+        .letterhead { background: #ffffff; width: 210mm; min-height: 297mm; position: relative; box-sizing: border-box; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+
+        /* HEADER */
+        .identity-container { position: absolute; left: 1.5cm; top: 0.75in; z-index: 2; }
+        .name { font-family: 'Playfair Display', serif; font-size: 24pt; margin: 0; text-transform: uppercase; color: #000; }
+        .designation { font-family: 'Palatino Linotype', serif; font-size: 9.5pt; margin-top: 4px; color: #333; }
+        .credentials { font-family: 'Palatino Linotype', serif; font-size: 8.25pt; margin-top: 2px; color: #333; }
+        .memberships { font-family: 'Palatino Linotype', serif; font-size: 8.25pt; color: #666; margin-top: 2px; }
+        .crest-img { position: absolute; top: 0.8in; right: 1.5cm; width: 110px; opacity: 0.15; filter: grayscale(1); }
+        
+        /* CONTENT SECTION (Margins enforced at 1 inch) */
+        .letter-content { margin: 2.2in 1in 1in 1in; font-family: 'Garamond', serif; font-size: 11.5pt; line-height: 1.6; min-height: 180mm; position: relative; }
+        #editor { outline: none; text-align: justify; }
+
+        /* QR CODE PLACEMENT */
+        #qr-affix {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 51px;
+            height: 51px;
+            z-index: 100;
         }
 
-        .header-temp {
-            border-bottom: 0.5px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 50px;
-        }
+        /* SIGNATURE ELEMENTS */
+        #sig-container { margin-top: 50px; text-align: right; }
+        .digital-sig { width: 300px; display: none; margin-left: auto; }
+        .physical-line { display: none; font-family: serif; font-size: 0.5pt; font-weight: bold; letter-spacing: -0.05em; color: #0B0B45; border-top: 0.5px solid #0B0B45; width: 220px; margin-left: auto; padding-top: 2px; text-align: center; }
 
-        #editor {
-            min-height: 150mm;
-            outline: none;
-            font-family: 'EB Garamond', serif;
-            font-size: 12pt;
-            line-height: 1.5;
-            text-align: justify;
+        /* MODAL DIALOG */
+        #print-modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--obsidian);
+            border: 1px solid var(--gold);
+            padding: 30px;
+            z-index: 2000;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1999; }
+
+        /* FOOTER */
+        .footer { position: absolute; bottom: 0.8in; width: 100%; text-align: center; }
+        .foot-line { font-family: serif; font-size: 0.5pt; font-weight: bold; letter-spacing: -0.1em; color: #0B0B45; }
+        .foot-res { font-family: 'Georgia', serif; font-weight: bold; text-transform: uppercase; letter-spacing: 0.60em; font-size: 7pt; }
+        .foot-addr { font-family: 'Georgia', serif; text-transform: capitalize; letter-spacing: 0.7em; font-size: 6pt; display: block; }
+        .foot-star { font-size: 4.5pt; color: #333; margin-top: 0px; display: block; }
+        .foot-email { font-family: 'Georgia', serif; text-transform: lowercase; letter-spacing: 0.45em; font-size: 6pt; margin-top: 2.5px; display: block; }
 
         @media print {
-            #ui-panel { display: none; }
-            body { background: white; }
-            .a4-sheet { box-shadow: none; margin: 0; width: 100%; }
+            #control-panel, #print-modal, .modal-overlay { display: none !important; }
+            .preview-area { padding: 0; overflow: visible; }
+            .letterhead { box-shadow: none; margin: 0; }
         }
-
-        input { width: 100%; padding: 10px; margin-bottom: 20px; background: #1a1a1a; color: white; border: 1px solid #444; }
-        button { background: var(--gold); padding: 15px; width: 100%; border: none; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="ui-panel">
-    <h2 style="color:var(--gold)">Miracle</h2>
-    <p style="font-size: 10px; color: #888;">Letterhead</p>
-    
-    <label>Advocate Name</label>
-    <input type="text" id="nameIn" value="AYUSHI MALVIYA" oninput="sync()">
-    
-    <label>Degrees</label>
-    <input type="text" id="degIn" value="BA LLB (Hons.)" oninput="sync()">
+<div id="control-panel">
+    <div class="sidebar-content">
+        <div class="sidebar-header">
+            <h1 class="miracle-logo">Miracle</h1>
+            <p class="estd">estd. 2026</p>
+        </div>
+        
+        <label>Formatting</label>
+        <div class="toolbar">
+            <button onclick="format('bold')"><i class="ph ph-text-b"></i></button>
+            <button onclick="format('italic')"><i class="ph ph-text-italic"></i></button>
+            <button onclick="format('underline')"><i class="ph ph-text-underline"></i></button>
+            <button onclick="format('justifyFull')"><i class="ph ph-text-align-justify"></i></button>
+            <button onclick="format('justifyLeft')"><i class="ph ph-text-align-left"></i></button>
+            <button onclick="format('justifyCenter')"><i class="ph ph-text-align-center"></i></button>
+            <button onclick="format('justifyRight')"><i class="ph ph-text-align-right"></i></button>
+        </div>
 
-    <div style="margin-top: 50px;">
-        <button onclick="format('bold')">B</button>
-        <button onclick="format('italic')" style="margin-top: 5px;">I</button>
+        <label>Advocate Name</label>
+        <input type="text" id="nameIn" value="AYUSHI MALVIYA" oninput="update()">
+        <label>Credentials Line</label>
+        <input type="text" id="upIn" value="UP 13495/25" oninput="update()">
+        <label>Degrees</label>
+        <input type="text" id="degIn" value="BA LLB (Hons.) | LLM (Criminal Law)" oninput="update()">
+        <label>Email Address</label>
+        <input type="text" id="emailIn" value="ayushimalviya329@gmail.com" oninput="update()">
+        <label>Residence Address</label>
+        <textarea id="addrIn1" rows="1" oninput="update()">12/504, Sector 12, Indira Nagar</textarea>
+        <textarea id="addrIn2" rows="1" style="margin-top:5px" oninput="update()">Lucknow - 226016</textarea>
+    </div>
+
+    <div class="sidebar-footer">
+        <button class="gold-btn" onclick="generateQR()">
+            <i class="ph ph-qr-code"></i> GEN. QR
+        </button>
+        <button class="gold-btn" onclick="initiatePrint()">
+            <i class="ph ph-printer"></i> PRINT PDF
+        </button>
+        <div class="copyright">© 2026 MALVIYA VENTURES</div>
     </div>
 </div>
 
-<div class="page-viewport">
-    <div class="a4-sheet">
-        <div class="header-temp">
-            <div id="outName" style="font-family: 'Playfair Display'; font-size: 24pt;">AYUSHI MALVIYA</div>
-            <div id="outDeg" style="font-family: 'EB Garamond'; font-size: 10pt; color: #444;">BA LLB (Hons.)</div>
+<div class="modal-overlay" id="overlay"></div>
+<div id="print-modal">
+    <h3 style="color: var(--gold); font-family: 'Playfair Display', serif;">Select Use Case</h3>
+    <p style="color: var(--text-dim); font-size: 0.8rem;">How will this document be utilized?</p>
+    <button class="gold-btn" onclick="finalizeExecution('digital')">DIGITAL USE</button>
+    <button class="gold-btn" style="background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="finalizeExecution('physical')">PHYSICAL USE</button>
+    <button style="background:none; border:none; color:white; cursor:pointer; margin-top:10px; font-size:0.7rem;" onclick="closeModal()">CANCEL</button>
+</div>
+
+<div class="preview-area">
+    <div class="letterhead" id="printable-sheet">
+        <img src="symbol.webp" class="crest-img" alt="">
+        
+        <div id="qr-affix"></div>
+
+        <div class="identity-container">
+            <div class="name" id="outName">AYUSHI MALVIYA</div>
+            <div class="designation">ADVOCATE, HON'BLE HIGH COURT LUCKNOW BENCH</div>
+            <div class="credentials">
+                <span id="outUp">UP 13495/25</span> • 
+                <span id="outDeg" style="font-style: italic;">BA LLB (Hons.) | LLM (Criminal Law)</span>
+            </div>
+            <div class="memberships">
+                Member, Oudh Bar Association | Member, SBF India
+            </div>
         </div>
 
-        <div id="editor" contenteditable="true">
-            Enter text here...
+        <div class="letter-content">
+            <div id="editor" contenteditable="true">
+                Date: March 18, 2026<br><br>
+                <b>TO WHOMSOEVER IT MAY CONCERN</b><br><br>
+                I, Ayushi Malviya, Advocate, hereby state that...
+            </div>
+            
+            <div id="sig-container">
+                <img src="signature.jpeg" id="outSigImage" class="digital-sig">
+                <div id="outSigLine" class="physical-line">IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY—IUM-PHYSICAL-SIGNATURE-AUTHENTIC-DONOTCOPY</div>
+            </div>
         </div>
-        
-        <div style="position: absolute; bottom: 1in; left: 1in; width: calc(100% - 2in); border-top: 1px solid #ccc; font-size: 8pt; text-align: center;">
-            Address goes here | Contact info | Website
+
+        <div class="footer">
+            <span class="foot-line">IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPYIUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY—IUM—LETTER—AUTHENTIC—DONOTCOPY</span>
+            <span class="foot-res">RESIDENCE</span>
+            <span class="foot-addr" id="outAddr1" style="margin-top: 3.5px">12/504, Sector 12, Indira Nagar</span>
+            <span class="foot-addr" id="outAddr2" style="margin-top: 1.5px">Lucknow<span style="letter-spacing: -0.1em;">——</span> 226016</span>
+            <span class="foot-star">★</span>
+            <span class="foot-email" id="outEmail">ayushimalviya329@gmail.com</span>
         </div>
     </div>
 </div>
 
 <script>
-    function sync() {
+    let qrAffixed = false;
+
+    function format(command) { document.execCommand(command, false, null); }
+
+    function update() {
         document.getElementById('outName').innerText = document.getElementById('nameIn').value;
+        document.getElementById('outUp').innerText = document.getElementById('upIn').value;
         document.getElementById('outDeg').innerText = document.getElementById('degIn').value;
+        document.getElementById('outEmail').innerText = document.getElementById('emailIn').value;
+        
+        document.getElementById('outAddr1').innerText = document.getElementById('addrIn1').value;
+        document.getElementById('outAddr2').innerHTML = document.getElementById('addrIn2').value.replace(' - ', '<span style=\"letter-spacing: -0.1em;\">——</span> ');
     }
 
-    function format(cmd) {
-        document.execCommand(cmd, false, null);
+    function generateQR() {
+        const url = prompt("Enter verification URL:");
+        if (!url) return;
+        
+        document.getElementById('qr-affix').innerHTML = ""; 
+        new QRCode(document.getElementById("qr-affix"), {
+            text: url,
+            width: 51, 
+            height: 51,
+            colorDark : "#0B0B45",
+            colorLight : "#ffffff"
+        });
+        qrAffixed = true;
+        alert("QR Code Affixed successfully.");
     }
+
+    function initiatePrint() {
+        if (!qrAffixed) {
+            alert("Please affix the QR Code before printing.");
+            return;
+        }
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('print-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('print-modal').style.display = 'none';
+    }
+
+    function finalizeExecution(type) {
+        const sigImage = document.getElementById('outSigImage');
+        const sigLine = document.getElementById('outSigLine');
+
+        sigImage.style.display = 'none';
+        sigLine.style.display = 'none';
+
+        if (type === 'digital') {
+            sigImage.style.display = 'block';
+        } else if (type === 'physical') {
+            sigLine.style.display = 'block';
+        }
+
+        closeModal();
+        
+        setTimeout(() => { 
+            window.print(); 
+        }, 150);
+    }
+    
+    update();
 </script>
-
 </body>
 </html>
