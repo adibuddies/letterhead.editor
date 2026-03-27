@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Letterhead Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:wght@200;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gold: #c5a059;
+            --obsidian: #0a0b0d;
+            --paper: #ffffff;
+        }
+
+        body { 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            background: #2b2b2b; /* dark bg for white paper */
+            font-family: 'Inter', sans-serif;
+        }
+
+        #ui-panel {
+            width: 400px;
+            background: var(--obsidian);
+            color: white;
+            padding: 30px;
+            border-right: 2px solid var(--gold);
+            overflow-y: auto;
+        }
+
+        .page-viewport {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .a4-sheet {
+            background: var(--paper);
+            width: 210mm; 
+            min-height: 297mm;
+            padding: 1in;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+            color: black;
+        }
+
+        .header-temp {
+            border-bottom: 0.5px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 50px;
+        }
+
+        #editor {
+            min-height: 150mm;
+            outline: none;
+            font-family: 'EB Garamond', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        @media print {
+            #ui-panel { display: none; }
+            body { background: white; }
+            .a4-sheet { box-shadow: none; margin: 0; width: 100%; }
+        }
+
+        input { width: 100%; padding: 10px; margin-bottom: 20px; background: #1a1a1a; color: white; border: 1px solid #444; }
+        button { background: var(--gold); padding: 15px; width: 100%; border: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h2 style="color:var(--gold)">Miracle</h2>
+    <p style="font-size: 10px; color: #888;">Letterhead</p>
+    
+    <label>Advocate Name</label>
+    <input type="text" id="nameIn" value="AYUSHI MALVIYA" oninput="sync()">
+    
+    <label>Degrees</label>
+    <input type="text" id="degIn" value="BA LLB (Hons.)" oninput="sync()">
+
+    <div style="margin-top: 50px;">
+        <button onclick="format('bold')">B</button>
+        <button onclick="format('italic')" style="margin-top: 5px;">I</button>
+    </div>
+</div>
+
+<div class="page-viewport">
+    <div class="a4-sheet">
+        <div class="header-temp">
+            <div id="outName" style="font-family: 'Playfair Display'; font-size: 24pt;">AYUSHI MALVIYA</div>
+            <div id="outDeg" style="font-family: 'EB Garamond'; font-size: 10pt; color: #444;">BA LLB (Hons.)</div>
+        </div>
+
+        <div id="editor" contenteditable="true">
+            Enter text here...
+        </div>
+        
+        <div style="position: absolute; bottom: 1in; left: 1in; width: calc(100% - 2in); border-top: 1px solid #ccc; font-size: 8pt; text-align: center;">
+            Address goes here | Contact info | Website
+        </div>
+    </div>
+</div>
+
+<script>
+    function sync() {
+        document.getElementById('outName').innerText = document.getElementById('nameIn').value;
+        document.getElementById('outDeg').innerText = document.getElementById('degIn').value;
+    }
+
+    function format(cmd) {
+        document.execCommand(cmd, false, null);
+    }
+</script>
+
+</body>
+</html>
