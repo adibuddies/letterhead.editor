@@ -28,3 +28,17 @@ You can use Wi-Fi connection to do the same.
       2.a. > click on the text "Wireless debugging" > select either option - QR or pairing code {connect using QR on the AS}
       
       2.b. Just turn on, no more steps.
+
+
+Replace ln283 to 285 in the current index.html (main branch of this repo) with:
+closeModal();
+        setTimeout(() => {
+            if (window.AndroidPrint) {
+                window.AndroidPrint.printPage();
+            } else {
+                window.print();
+            }
+        }, 150);
+    }
+Thankyou for using my app! Any suggestions are welcome, I am still in learning and testing phases. Do this purely as a hobby.
+Wouldn't have been possible for me to do xml or java without AI Copilot or GitHub Claude Haiku 4.5 (part of free GitHub Student Dev Pack that I am enjoying for 2+ years) help. I mostly deal in python.
