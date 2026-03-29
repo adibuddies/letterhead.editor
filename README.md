@@ -28,17 +28,43 @@ You can use Wi-Fi connection to do the same.
       2.a. > click on the text "Wireless debugging" > select either option - QR or pairing code {connect using QR on the AS}
       
       2.b. Just turn on, no more steps.
+      
+// ---------------------------------------------------------------------------------------------------------------------------------------------- //
+// ------------------------------------- INDEX.HTML corrections for CSS, font styling, etc. below this line ------------------------------------- //
+// ---------------------------------------------------------------------------------------------------------------------------------------------- //
+
+
+Add these below <style> tag in index.html (main branch of this repo):
+      @font-face {
+            font-family: 'Playfair Display';
+            src: url('fonts/PlayfairDisplay-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'EB Garamond';
+            src: url('fonts/EBGaramond-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'EB Garamond';
+            src: url('fonts/EBGaramond-Italic.ttf') format('truetype');
+            font-style: italic;
+        }
+
+
+Replace <link href="font url is here in the file"> in index.html with:
+        <link href="css/phosphor.css" rel="stylesheet">
 
 
 Replace ln283 to 285 in the current index.html (main branch of this repo) with:
-closeModal();
-        setTimeout(() => {
-            if (window.AndroidPrint) {
-                window.AndroidPrint.printPage();
-            } else {
-                window.print();
-            }
-        }, 150);
-    }
+      closeModal();
+      setTimeout(() => {
+          if (window.AndroidPrint) {
+              window.AndroidPrint.printPage();
+          } else {
+              window.print();
+          }
+      }, 150);
+    
 Thankyou for using my app! Any suggestions are welcome, I am still in learning and testing phases. Do this purely as a hobby.
 Wouldn't have been possible for me to do xml or java without AI Copilot or GitHub Claude Haiku 4.5 (part of free GitHub Student Dev Pack that I am enjoying for 2+ years) help. I mostly deal in python.
