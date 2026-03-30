@@ -95,6 +95,42 @@
             .preview-area { padding: 0; overflow: visible; }
             .letterhead { box-shadow: none; margin: 0; }
         }
+
+        @media (max-width: 600px) {
+            .preview-area {
+                padding: 10px;
+            }
+
+            .letterhead {
+                width: 100% !important;
+                min-height: auto;
+                padding: 0.5in;
+            }
+
+            .name {
+                font-size: 18pt !important;
+            }
+
+            .designation, .credentials, .memberships {
+                font-size: 7pt !important;
+            }
+
+            .digital-sig {
+                width: 180px;
+            }
+
+            body {
+               flex-direction: column;
+               overflow-y: auto;
+            }
+
+            #control-panel {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid var(--gold);
+            }
+        }
     </style>
 </head>
 <body>
