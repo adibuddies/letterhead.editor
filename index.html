@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Letterhead Editor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:wght@200;400;700&display=swap" rel="stylesheet">
+    <link href="css/phosphor.css" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="qrcode.min.js"></script>
     
     <style>
         :root {
@@ -14,6 +14,22 @@
             --glass: rgba(15, 17, 21, 0.95);
             --text-dim: #9ea3ae;
             --border-gold: rgba(197, 160, 89, 0.3);
+        }
+
+        @font-face {
+            font-family: 'Playfair Display';
+            src: url('fonts/PlayfairDisplay-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'EB Garamond';
+            src: url('fonts/EBGaramond-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'EB Garamond';
+            src: url('fonts/EBGaramond-Italic.ttf') format('truetype');
+            font-style: italic;
         }
 
         * { box-sizing: border-box; }
@@ -90,6 +106,10 @@
         .foot-star { font-size: 4.5pt; color: #333; margin-top: 0px; display: block; }
         .foot-meta { font-family: 'Georgia', serif; text-transform: lowercase; letter-spacing: 0.45em; font-size: 6pt; margin-top: 2.5px; display: block; }
 
+        .foot-line {
+            display: none;
+        }
+
         @media print { 
             @page { 
                 size: A4;
@@ -100,7 +120,7 @@
                 height: 100%;
                 margin: 0 !important;
                 padding: 0 !important;
-                background: #fff !important:
+                background: #fff !important;
             }
             
             #control-panel, #print-modal, .modal-overlay { display: none !important; }
@@ -132,6 +152,37 @@
                 top: 0.75in !important;
                 left: 1.5cm !important;
             }
+
+            .foot-line {
+                display: block !important;
+                font-family: serif !important;
+                font-size: 0.5pt !important;
+                font-weight: bold !important;
+                letter-spacing: -0.1em !important;
+                color: #0B0B45 !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                margin-bottom: 5px !important;
+                -webkit-text-size-adjust: none !important; 
+                text-size-adjust: none !important;
+            }
+
+            .physical-line {
+                font-family: serif !important;
+                font-size: 0.5pt !important;
+                font-weight: bold !important;
+                letter-spacing: -0.05em !important;
+                color: #0B0B45 !important;
+                border-top: 0.5px solid #0B0B45 !important;
+                width: 220px !important;
+                margin-left: auto !important;
+                padding-top: 2px !important;
+                text-align: center !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                -webkit-text-size-adjust: none !important; 
+                text-size-adjust: none !important;
+            }
             
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -144,6 +195,10 @@
                flex-direction: column !important;
                overflow-y: auto !important;
                height: auto !important;
+            }
+
+            .foot-line, .physical-line {
+                display: none !important;
             }
 
             .letterhead {
@@ -185,6 +240,14 @@
                 background: #2b2b2b;
             }
         }
+        
+        body.android-mode .foot-line,
+        body.android-mode .physical-line {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
     </style>
 </head>
 <body>
@@ -334,19 +397,26 @@
 
         // Microtext logic - repeating string to fill line
         const fMicro = document.getElementById('footerMicroIn').value;
-        document.getElementById('outFooterMicro').innerText = fMicro.repeat(30);
+        document.getElementById('outFooterMicro').innerText = fMicro.repeat(50);
         
         const sMicro = document.getElementById('signMicroIn').value;
-        document.getElementById('outSigLine').innerText = sMicro.repeat(15);
+        document.getElementById('outSigLine').innerText = sMicro.repeat(25);
     }
 
     function generateQR() {
         const url = prompt("Enter Verification URL:");
-        if (!url) return;
-        document.getElementById('qr-affix').innerHTML = ""; 
-        new QRCode(document.getElementById("qr-affix"), {
-            text: url, width: 51, height: 51,
-            colorDark : "#0B0B45", colorLight : "#ffffff"
+        if (!url || url.trim() === "") return;
+
+        const qrContainer = document.getElementById('qr-affix');
+        qrContainer.innerHTML = "";
+
+        new QRCode(qrContainer, {
+            text: url,
+            width: 51,
+            height: 51,
+            colorDark : "#0B0B45",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
         });
         alert("QR Code Affixed.");
     }
@@ -367,16 +437,28 @@
         sigImage.style.display = 'none';
         sigLine.style.display = 'none';
 
-        if (type === 'digital') { sigImage.style.display = 'block'; } 
-        else if (type === 'physical') { sigLine.style.display = 'block'; }
+        if (type === 'digital') { 
+            sigImage.style.display = 'block'; 
+        } 
+        else if (type === 'physical' && !window.AndroidPrint) { 
+            sigLine.style.display = 'block'; 
+        }
 
         closeModal();
-        setTimeout(() => { window.print(); }, 150);
+        setTimeout(() => {
+            if (window.AndroidPrint) {
+                window.AndroidPrint.printPage();
+            } else {
+                window.print();
+            }
+        }, 150);
     }
     
-    // Initialize
+    if (window.AndroidPrint) {
+        document.body.classList.add('android-mode');
+    }
+    
     update();
 </script>
-
 </body>
 </html>
